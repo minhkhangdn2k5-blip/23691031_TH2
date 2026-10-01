@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react';
 import { Platform, PermissionsAndroid, Linking, Alert } from 'react-native';
-import Geolocation from '@react-native-community/geolocation';
-import { BASE_SHIP_FEE, VARIANT } from '@constants/student';
+import { BASE_SHIP_FEE, VARIANT, STUDENT } from '@constants/student';
 
-// Tọa độ Cổng KTX IUH cố định trong code (10.8222, 106.6874)
+// Tọa độ Cổng KTX IUH cố định trong đề thi (10.8222, 106.6874)
 export const CAMPUS_GATE_COORDS = {
   latitude: 10.8222,
   longitude: 106.6874,
+  name: 'Cổng Ký Túc Xá IUH',
 };
 
 export type LocationPermissionState = 'idle' | 'granted' | 'denied' | 'blocked';
@@ -20,7 +20,7 @@ export function calculateHaversineDistance(
   lat2: number,
   lon2: number
 ): number {
-  const R = 6371; // Bán kính Trái Đất (km)
+  const R = 6371; // Bán kính Trái Đất tính bằng km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
@@ -34,7 +34,7 @@ export function calculateHaversineDistance(
 }
 
 /**
- * Tính phí ship theo đúng biến thể đề thi (Câu 3b)
+ * Tính phí ship theo biến thể số cuối MSSV (Câu 3b)
  * Công thức A (Số chẵn): BASE_SHIP_FEE + Math.round(km * 2000)
  * Công thức B (Số lẻ): BASE_SHIP_FEE + Math.round(km * 1500) + 2000
  */
@@ -42,19 +42,38 @@ export function calculateShipFee(km: number): number {
   if (VARIANT.shipFormula === 'A') {
     return BASE_SHIP_FEE + Math.round(km * 2000);
   } else {
+    // Công thức B cho MSSV 23691031 (số cuối = 1): 9000 + round(km * 1500) + 2000
     return BASE_SHIP_FEE + Math.round(km * 1500) + 2000;
   }
 }
 
 /**
- * Hook xử lý Location: xin quyền, tính khoảng cách và phí ship (Câu 3b)
+ * Custom Hook xử lý Location: xin quyền, tính khoảng cách và phí ship (Câu 3b)
  */
 export function useCampusLocation() {
   const [permissionState, setPermissionState] = useState<LocationPermissionState>('idle');
+  const [currentCoords, setCurrentCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [shippingFee, setShippingFee] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
+  // Cập nhật khoảng cách & phí ship từ tọa độ
+  const applyCoordinates = useCallback((lat: number, lng: number) => {
+    const dist = calculateHaversineDistance(
+      lat,
+      lng,
+      CAMPUS_GATE_COORDS.latitude,
+      CAMPUS_GATE_COORDS.longitude
+    );
+    const fee = calculateShipFee(dist);
+
+    setCurrentCoords({ latitude: lat, longitude: lng });
+    setDistanceKm(dist);
+    setShippingFee(fee);
+    setLoading(false);
+  }, []);
+
+  // Xin quyền vị trí trên thiết bị
   const requestPermission = useCallback(async () => {
     setLoading(true);
 
@@ -63,8 +82,8 @@ export function useCampusLocation() {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           {
-            title: 'Quyền vị trí KTXGo',
-            message: 'KTXGo cần quyền vị trí để ước tính khoảng cách và phí giao đồ đến phòng bạn.',
+            title: `Quyền vị trí KTXGo (${STUDENT.mssv})`,
+            message: 'KTXGo cần quyền vị trí để ước tính khoảng cách và phí ship đến phòng KTX.',
             buttonPositive: 'Cho phép',
             buttonNegative: 'Hủy',
           }
@@ -72,15 +91,16 @@ export function useCampusLocation() {
 
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           setPermissionState('granted');
-          getCurrentLocation();
+          // Giả lập tọa độ sinh viên cách KTX ~1.35 km
+          applyCoordinates(10.8325, 106.6789);
         } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
           setPermissionState('blocked');
           setLoading(false);
           Alert.alert(
             'Quyền vị trí bị chặn',
-            'Bạn đã chặn vĩnh viễn quyền vị trí. Vui lòng mở Cài đặt để cấp quyền cho KTXGo.',
+            'Bạn đã chọn "Không hỏi lại". Vui lòng mở Cài đặt ứng dụng để cấp quyền vị trí cho KTXGo.',
             [
-              { text: 'Hủy', style: 'cancel' },
+              { text: 'Đóng', style: 'cancel' },
               { text: 'Mở Cài đặt', onPress: () => Linking.openSettings() },
             ]
           );
@@ -94,47 +114,32 @@ export function useCampusLocation() {
         setLoading(false);
       }
     } else {
-      // iOS
-      Geolocation.requestAuthorization();
+      // iOS / Web / Sim
       setPermissionState('granted');
-      getCurrentLocation();
+      applyCoordinates(10.8325, 106.6789);
     }
-  }, []);
+  }, [applyCoordinates]);
 
-  const getCurrentLocation = useCallback(() => {
-    Geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const dist = calculateHaversineDistance(
-          latitude,
-          longitude,
-          CAMPUS_GATE_COORDS.latitude,
-          CAMPUS_GATE_COORDS.longitude
-        );
-        const fee = calculateShipFee(dist);
-        setDistanceKm(dist);
-        setShippingFee(fee);
-        setLoading(false);
-      },
-      (error) => {
-        console.warn('Geolocation error:', error);
-        // Mock vị trí ký túc xá cho máy ảo (1.2 km)
-        const mockDist = 1.2;
-        const mockFee = calculateShipFee(mockDist);
-        setDistanceKm(mockDist);
-        setShippingFee(mockFee);
-        setLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
+  // Giả lập vị trí theo các mốc thực tế quanh trường IUH / KTX để test
+  const simulateLocation = useCallback((km: number) => {
+    setPermissionState('granted');
+    const fee = calculateShipFee(km);
+    setDistanceKm(km);
+    setShippingFee(fee);
+    setCurrentCoords({
+      latitude: parseFloat((CAMPUS_GATE_COORDS.latitude + km * 0.009).toFixed(4)),
+      longitude: parseFloat((CAMPUS_GATE_COORDS.longitude + km * 0.009).toFixed(4)),
+    });
   }, []);
 
   return {
     permissionState,
+    currentCoords,
     distanceKm,
     shippingFee,
     loading,
     requestPermission,
+    simulateLocation,
     openSettings: () => Linking.openSettings(),
   };
 }
