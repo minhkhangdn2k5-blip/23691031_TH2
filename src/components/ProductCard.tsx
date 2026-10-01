@@ -1,97 +1,92 @@
-import React, { useEffect, memo } from 'react';
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
+import React from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { Product } from '@services/productApi';
+import { useCartStore } from '@stores/cartStore';
 import { COLORS, SIZES } from '@constants/theme';
-import { useTheme } from '@hooks/useTheme';
-import ShopButton from '@components/ShopButton';
-import { Product } from '../types/product.schema';
-import { useCartStore } from '@store/useCartStore';
-
-const { width } = Dimensions.get('window');
-const GAP = 12;
-const CARD_WIDTH = (width - GAP * 3) / 2;
+import { PRICE_MULTIPLIER, VARIANT } from '@constants/student';
 
 interface ProductCardProps {
   product: Product;
+  onPress: () => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { colors } = useTheme();
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 48) / 2;
+
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress }) => {
   const addItem = useCartStore((state) => state.addItem);
-  const opacity = useSharedValue(0);
 
-  useEffect(() => {
-    opacity.value = withTiming(1, { duration: 400 });
-  }, [opacity]);
+  const priceVND = Math.round(product.price * PRICE_MULTIPLIER);
+  const formattedPrice = `${priceVND.toLocaleString('vi-VN')} đ`;
 
-  const fadeInStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-    };
-  });
+  const handleAddToCart = () => {
+    addItem({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: product.image,
+    });
+  };
 
   return (
-    <Animated.View
-      style={[
-        styles.card,
-        fadeInStyle,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-      ]}
+    <TouchableOpacity
+      style={styles.card}
+      onPress={onPress}
+      activeOpacity={0.85}
     >
       <Image
         source={{ uri: product.image }}
         style={styles.image}
-        resizeMode="cover"
+        resizeMode="contain"
       />
       <View style={styles.infoContainer}>
-        <Text style={[styles.name, { color: colors.text }]} numberOfLines={2}>
-          {product.name}
+        <Text style={styles.title} numberOfLines={2}>
+          {product.title}
         </Text>
-        <Text style={[styles.price, { color: colors.primary }]}>
-          {`${product.price.toLocaleString('vi-VN')} đ`}
-        </Text>
-        <ShopButton
-          title="Mua ngay"
-          onPress={() => addItem(product)}
-          style={styles.button}
-          textStyle={styles.buttonText}
-        />
+        <Text style={styles.price}>{formattedPrice}</Text>
+
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={handleAddToCart}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.addButtonText}>+ Thêm vào giỏ</Text>
+        </TouchableOpacity>
       </View>
-    </Animated.View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
     width: CARD_WIDTH,
-    marginHorizontal: GAP / 2,
-    marginBottom: GAP,
     backgroundColor: COLORS.surface,
     borderRadius: SIZES.radius,
-    overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    marginBottom: 16,
+    marginHorizontal: 6,
     borderWidth: 1,
     borderColor: COLORS.border,
+    overflow: 'hidden',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   image: {
     width: '100%',
-    height: CARD_WIDTH,
-    backgroundColor: '#F0F0F0',
+    height: 140,
+    backgroundColor: '#FFFFFF',
+    marginTop: 8,
   },
   infoContainer: {
     padding: 10,
+    justifyContent: 'space-between',
+    flex: 1,
   },
-  name: {
+  title: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.text,
     height: 36,
     lineHeight: 18,
@@ -103,11 +98,15 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 8,
   },
-  button: {
-    height: 34,
+  addButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 8,
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonText: {
+  addButtonText: {
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
   },

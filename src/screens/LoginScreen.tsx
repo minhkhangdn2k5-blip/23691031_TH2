@@ -1,134 +1,163 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Pressable, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import ShopButton from '@components/ShopButton';
-import ShopInput from '@components/ui/ShopInput';
-import Typography from '@components/ui/Typography';
-import { SIZES } from '@constants/theme';
-import { useTheme } from '@hooks/useTheme';
-import { useAuthStore } from '@store/useAuthStore';
-
-interface LoginScreenProps {
-  onLogin?: (token: string) => void;
-  onGoRegister?: () => void;
-}
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from 'react-native';
+import { useAuthStore } from '@stores/authStore';
+import { VARIANT, STUDENT } from '@constants/student';
+import { COLORS } from '@constants/theme';
+import Watermark from '@components/Watermark';
 
 /**
- * Màn hình Đăng nhập (Chương 5 & Chương 6 - Bước 6)
- * Kết nối trực tiếp với useAuthStore, xóa bỏ hoàn toàn Prop Drilling
+ * Màn hình Đăng Nhập KTXGo (Câu 1a - Giao diện 1)
+ * Ô nhập phone hoặc email theo biến thể số cuối MSSV
  */
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onGoRegister }) => {
-  const navigation = useNavigation<any>();
-  const storeLogin = useAuthStore((state) => state.login);
-  const handleSuccess = onLogin || storeLogin;
-  const goToRegister = onGoRegister || (() => navigation.navigate('Register'));
+export const LoginScreen: React.FC = () => {
+  const login = useAuthStore((state) => state.login);
+  const isPhone = VARIANT.authField === 'phone';
 
-  const { colors } = useTheme();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const [loading, setLoading] = useState(false);
-
-  // Kiểm tra tính hợp lệ của thông tin đăng nhập
-  const validate = () => {
-    const next: { email?: string; password?: string } = {};
-    if (!email.includes('@')) {
-      next.email = 'Email không hợp lệ (phải chứa ký tự @)';
-    }
-    if (password.length < 6) {
-      next.password = 'Mật khẩu phải có ít nhất 6 ký tự';
-    }
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  };
+  const [inputVal, setInputVal] = useState(
+    isPhone ? '0912345678' : `${STUDENT.mssv}@iuh.edu.vn`
+  );
 
   const handleLogin = () => {
-    if (!validate()) return;
-    setLoading(true);
-    // Giả lập độ trễ mạng xác thực người dùng
-    setTimeout(() => {
-      setLoading(false);
-      handleSuccess('shopai_token_' + Date.now());
-    }, 800);
+    if (!inputVal.trim()) {
+      Alert.alert('Thông báo', isPhone ? 'Vui lòng nhập số điện thoại!' : 'Vui lòng nhập email!');
+      return;
+    }
+    login(inputVal.trim());
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.safe, { backgroundColor: colors.background }]}
-    >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Typography variant="h1" color={colors.primary} style={styles.title}>
-          ShopAI
-        </Typography>
-        <Typography variant="body1" color={colors.textLight} style={styles.subtitle}>
-          Vui lòng đăng nhập để tiếp tục
-        </Typography>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        {VARIANT.watermarkAtTop && <Watermark />}
 
-        <ShopInput
-          label="Email"
-          placeholder="admin@shopai.vn"
-          value={email}
-          onChangeText={setEmail}
-          error={errors.email}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
+        <View style={styles.content}>
+          <View style={styles.headerBox}>
+            <Text style={styles.title}>KTXGO</Text>
+            <Text style={styles.subtitle}>Giao đồ tận phòng ký túc xá</Text>
+          </View>
 
-        <ShopInput
-          label="Mật khẩu"
-          placeholder="Tối thiểu 6 ký tự"
-          value={password}
-          onChangeText={setPassword}
-          error={errors.password}
-          secureTextEntry
-        />
+          <View style={styles.formCard}>
+            <Text style={styles.fieldLabel}>
+              {isPhone ? 'Số điện thoại sinh viên' : 'Email sinh viên'}
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={inputVal}
+              onChangeText={setInputVal}
+              placeholder={isPhone ? '0912345678' : `${STUDENT.mssv}@iuh.edu.vn`}
+              placeholderTextColor={COLORS.textLight}
+              keyboardType={isPhone ? 'phone-pad' : 'email-address'}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
 
-        <ShopButton
-          title={loading ? 'Đang xác thực...' : 'Đăng nhập ngay'}
-          onPress={handleLogin}
-          style={styles.loginBtn}
-        />
+            <TouchableOpacity style={styles.loginButton} activeOpacity={0.8} onPress={handleLogin}>
+              <Text style={styles.loginButtonText}>Vào cửa hàng</Text>
+            </TouchableOpacity>
 
-        {/* Chuyển hướng sang màn Đăng ký */}
-        <Pressable onPress={onGoRegister} style={styles.registerLink}>
-          <Typography variant="body2" color={colors.textLight}>
-            Chưa có tài khoản?{' '}
-            <Typography variant="body2" color={colors.primary} style={{ fontWeight: '700' }}>
-              Đăng ký ngay
-            </Typography>
-          </Typography>
-        </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <Text style={styles.hintText}>Auth Stack · chưa có token</Text>
+          </View>
+        </View>
+
+        {!VARIANT.watermarkAtTop && <Watermark />}
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safe: {
+  safeArea: {
     flex: 1,
+    backgroundColor: COLORS.background,
   },
   container: {
-    flexGrow: 1,
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
-    padding: SIZES.padding,
+    paddingHorizontal: 24,
   },
-  title: {
-    fontSize: 38,
-    fontWeight: '900',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    textAlign: 'center',
+  headerBox: {
+    alignItems: 'center',
     marginBottom: 32,
   },
-  loginBtn: {
-    marginTop: 12,
+  title: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: COLORS.primary,
+    letterSpacing: -0.5,
   },
-  registerLink: {
-    marginTop: 24,
+  subtitle: {
+    fontSize: 15,
+    color: COLORS.textLight,
+    marginTop: 6,
+  },
+  formCard: {
+    backgroundColor: COLORS.surface,
+    padding: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 8,
+  },
+  input: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    fontSize: 15,
+    color: COLORS.text,
+    backgroundColor: COLORS.background,
+    marginBottom: 20,
+  },
+  loginButton: {
+    height: 48,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  hintText: {
+    fontSize: 12,
+    color: COLORS.textLight,
+    textAlign: 'center',
+    marginTop: 16,
   },
 });
 
