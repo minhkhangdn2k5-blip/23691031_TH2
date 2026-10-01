@@ -29,6 +29,7 @@ import { COLORS } from '@constants/theme';
  * (A) Header KTXGO + Giao tận {ROOM_LABEL}
  * (B) Ô tìm controlled; filter theo bản debounce DEBOUNCE_MS
  * (C) FlashList 2 cột; không bọc ScrollView dọc; key ghép mssv
+ * - Xử lý 3 trạng thái mạng: Loading, Error (có nút Thử lại có spinner), Success
  */
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -42,6 +43,7 @@ export const HomeScreen: React.FC = () => {
     data: products,
     isLoading,
     isError,
+    isFetching,
     error,
     refetch,
     isRefetching,
@@ -122,9 +124,14 @@ export const HomeScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.retryButton}
               onPress={() => refetch()}
+              disabled={isFetching}
               activeOpacity={0.8}
             >
-              <Text style={styles.retryButtonText}>Thử lại</Text>
+              {isFetching ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.retryButtonText}>Thử lại</Text>
+              )}
             </TouchableOpacity>
           </View>
         ) : (
@@ -274,9 +281,12 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
     borderRadius: 10,
+    minWidth: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
