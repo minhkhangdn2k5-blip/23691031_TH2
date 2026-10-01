@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  SafeAreaView,
+  StatusBar,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@stores/authStore';
 import { useCampusLocation, CAMPUS_GATE_COORDS } from '@hooks/useCampusLocation';
 import Watermark from '@components/Watermark';
@@ -53,7 +54,8 @@ export const MeScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" />
       {VARIANT.watermarkAtTop && <Watermark />}
 
       {/* Header */}

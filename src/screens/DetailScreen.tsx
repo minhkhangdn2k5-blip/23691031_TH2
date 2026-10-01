@@ -7,9 +7,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  SafeAreaView,
+  StatusBar,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProductById, Product } from '@services/productApi';
@@ -21,7 +22,7 @@ import {
   PRICE_MULTIPLIER,
   VARIANT,
 } from '@constants/student';
-import { COLORS, SIZES } from '@constants/theme';
+import { COLORS } from '@constants/theme';
 
 /**
  * Màn hình Chi tiết món (Câu 2b - DetailScreen)
@@ -70,7 +71,8 @@ export const DetailScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" />
       {VARIANT.watermarkAtTop && <Watermark />}
 
       {isLoading ? (

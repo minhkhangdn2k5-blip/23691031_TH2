@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ShopStack from './ShopStack';
 import CartScreen from '@screens/CartScreen';
@@ -26,7 +26,7 @@ export const MainTabs: React.FC = () => {
       options={{
         headerShown: false,
         title: 'Cửa hàng',
-        tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🏪</Text>,
+        tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🏪</Text>,
       }}
     />
   );
@@ -39,9 +39,16 @@ export const MainTabs: React.FC = () => {
       options={{
         headerShown: false,
         title: 'Giỏ',
-        tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🛒</Text>,
+        tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🛒</Text>,
         tabBarBadge: totalQuantity > 0 ? totalQuantity : undefined,
-        tabBarBadgeStyle: { backgroundColor: COLORS.secondary },
+        tabBarBadgeStyle: {
+          backgroundColor: COLORS.secondary,
+          fontSize: 10,
+          fontWeight: '800',
+          minWidth: 18,
+          height: 18,
+          lineHeight: 18,
+        },
       }}
     />
   );
@@ -54,7 +61,7 @@ export const MainTabs: React.FC = () => {
       options={{
         headerShown: false,
         title: 'Tôi',
-        tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>👤</Text>,
+        tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>👤</Text>,
       }}
     />
   );
@@ -67,13 +74,13 @@ export const MainTabs: React.FC = () => {
         tabBarStyle: {
           backgroundColor: COLORS.surface,
           borderTopColor: COLORS.border,
-          height: 60,
-          paddingBottom: 8,
+          height: Platform.OS === 'ios' ? 68 : 64,
+          paddingBottom: Platform.OS === 'ios' ? 14 : 10,
           paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '600',
+          fontWeight: '700',
         },
       }}
     >
