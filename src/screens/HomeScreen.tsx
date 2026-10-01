@@ -24,14 +24,16 @@ import {
 import { COLORS } from '@constants/theme';
 
 /**
- * Màn hình Trang Chủ KTXGo (Câu 2a & 2b)
- * - Header nhận diện KTXGO + Giao tận P.131
- * - Ô tìm kiếm Debounce 400ms
- * - FlashList 2 cột với keyExtractor có tiền tố MSSV
- * - TanStack Query quản lý 3 trạng thái mạng: Loading, Error (có nút Thử lại), Success
+ * Màn hình Trang Chủ KTXGo (Giao diện 2 - Câu 2)
+ * (0) STUDENT + examStamp(), không gõ cứng tên người khác
+ * (A) Header KTXGO + Giao tận {ROOM_LABEL}
+ * (B) Ô tìm controlled; filter theo bản debounce DEBOUNCE_MS
+ * (C) FlashList 2 cột; không bọc ScrollView dọc; key ghép mssv
  */
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+
+  // (B) Ô tìm controlled
   const [searchText, setSearchText] = useState('');
   const debouncedSearch = useDebouncedValue(searchText, DEBOUNCE_MS);
 
@@ -48,7 +50,7 @@ export const HomeScreen: React.FC = () => {
     queryFn: fetchProducts,
   });
 
-  // Lọc sản phẩm theo từ khóa đã debounce
+  // (B) Filter theo bản debounce DEBOUNCE_MS
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     if (!debouncedSearch.trim()) return products;
@@ -65,24 +67,24 @@ export const HomeScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       {VARIANT.watermarkAtTop && <Watermark />}
 
-      {/* Header KTXGO */}
+      {/* (A) Header KTXGO + Giao tận {ROOM_LABEL} */}
       <View style={styles.header}>
         <View>
           <Text style={styles.brandTitle}>KTXGO</Text>
-          <Text style={styles.roomLabel}>📍 Giao tận {ROOM_LABEL} · IUH</Text>
+          <Text style={styles.roomLabel}>Giao tận {ROOM_LABEL}</Text>
         </View>
         <View style={styles.studentBadge}>
           <Text style={styles.studentBadgeText}>{STUDENT.mssv}</Text>
         </View>
       </View>
 
-      {/* Ô tìm kiếm món ăn với Debounce */}
+      {/* (B) Ô tìm kiếm controlled with DEBOUNCE_MS */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder={`Tìm món ăn, đồ uống KTX (${DEBOUNCE_MS}ms)...`}
+            placeholder={`Tìm món ăn, trà sữa (${DEBOUNCE_MS}ms)...`}
             placeholderTextColor={COLORS.textLight}
             value={searchText}
             onChangeText={setSearchText}
@@ -90,7 +92,10 @@ export const HomeScreen: React.FC = () => {
             autoCorrect={false}
           />
           {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchText('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity
+              onPress={() => setSearchText('')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Text style={styles.clearIcon}>✕</Text>
             </TouchableOpacity>
           )}
@@ -100,14 +105,14 @@ export const HomeScreen: React.FC = () => {
       {/* 3 Trạng thái mạng với React Query */}
       <View style={styles.contentContainer}>
         {isLoading ? (
-          // 1. Trạng thái Đang tải (Loading State)
+          // 1. Loading State
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={COLORS.primary} />
             <Text style={styles.loadingTitle}>Đang tải thực đơn KTXGo...</Text>
             <Text style={styles.loadingSubtitle}>MSSV: {STUDENT.mssv} · FakeStoreAPI</Text>
           </View>
         ) : isError ? (
-          // 2. Trạng thái Lỗi (Error State)
+          // 2. Error State
           <View style={styles.centerContainer}>
             <Text style={styles.errorIcon}>⚠️</Text>
             <Text style={styles.errorTitle}>Không thể tải danh sách món</Text>
@@ -123,11 +128,11 @@ export const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         ) : (
-          // 3. Trạng thái Thành công (Success State) - FlashList 2 Cột
+          // (C) FlashList 2 cột; không bọc ScrollView dọc; key ghép mssv
           <FlashList
             data={filteredProducts}
             numColumns={2}
-            keyExtractor={(item) => `23691031-${item.id}`}
+            keyExtractor={(item) => `${STUDENT.mssv}-${item.id}`}
             renderItem={({ item }) => (
               <ProductCard
                 product={item}
@@ -177,9 +182,9 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   roomLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textLight,
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.secondary,
     marginTop: 2,
   },
   studentBadge: {
