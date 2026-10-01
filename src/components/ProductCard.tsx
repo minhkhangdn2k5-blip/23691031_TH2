@@ -3,7 +3,7 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'rea
 import { Product } from '@services/productApi';
 import { useCartStore } from '@stores/cartStore';
 import { COLORS, SIZES } from '@constants/theme';
-import { PRICE_MULTIPLIER, VARIANT } from '@constants/student';
+import { PRICE_MULTIPLIER } from '@constants/student';
 
 interface ProductCardProps {
   product: Product;

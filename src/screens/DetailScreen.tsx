@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProductById, Product } from '@services/productApi';
 import { useCartStore } from '@stores/cartStore';
@@ -32,7 +32,6 @@ import { COLORS } from '@constants/theme';
  */
 export const DetailScreen: React.FC = () => {
   const route = useRoute<any>();
-  const navigation = useNavigation<any>();
   const productId = route.params?.id;
 
   const addItem = useCartStore((state) => state.addItem);
