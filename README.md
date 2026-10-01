@@ -33,21 +33,30 @@ KTXGo_23691031/
 ├── package.json
 ├── babel.config.js
 ├── tsconfig.json
+├── docs/
+│   ├── screenshot-th2-home.png
+│   └── screenshot-th2-cart.png
 └── src/
-    ├── constants/student.ts
-    ├── constants/theme.ts
-    ├── hooks/useDebouncedValue.ts
-    ├── hooks/useCampusLocation.ts
-    ├── services/apiClient.ts
-    ├── services/productApi.ts
-    ├── stores/authStore.ts
-    ├── stores/cartStore.ts
-    ├── navigation/RootNavigator.tsx
-    ├── navigation/AuthStack.tsx
-    ├── navigation/MainTabs.tsx
-    ├── navigation/ShopStack.tsx
-    ├── components/ProductCard.tsx
-    ├── components/Watermark.tsx
+    ├── constants/
+    │   ├── student.ts
+    │   └── theme.ts
+    ├── hooks/
+    │   ├── useDebouncedValue.ts
+    │   └── useCampusLocation.ts
+    ├── services/
+    │   ├── apiClient.ts
+    │   └── productApi.ts
+    ├── stores/
+    │   ├── authStore.ts
+    │   └── cartStore.ts
+    ├── navigation/
+    │   ├── RootNavigator.tsx
+    │   ├── AuthStack.tsx
+    │   ├── MainTabs.tsx
+    │   └── ShopStack.tsx
+    ├── components/
+    │   ├── ProductCard.tsx
+    │   └── Watermark.tsx
     └── screens/
         ├── LoginScreen.tsx
         ├── HomeScreen.tsx
